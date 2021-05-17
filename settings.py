@@ -5,9 +5,7 @@ GRID_HEIGHT = 25
 WIN_WIDTH = TILE_SIZE*GRID_WIDTH
 WIN_HEIGHT = TILE_SIZE*GRID_HEIGHT
 
-slopes = [
-  (-1, 0),(-1, 1),(0, 1),(1, 1),(1, 0),(1, -1),(0, -1),(-1, -1)
-]
+slopes = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
 
 possible_directions = {
     'u': 0, 'd': 1, 'l': 2, 'r': 3, 'ur': 4, 'ul': 5, 'dr': 6, 'dl': 7, 's': 8, 
@@ -25,7 +23,7 @@ moves = {
   's': (0, 0)
 }
 
-offspring_energy_required = 1
+offspring_energy_required = 1000
 
 def manhattan_distance(v1, v2):
     return abs(v1.x-v2.x) + abs(v1.y-v2.y)

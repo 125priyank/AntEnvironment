@@ -7,7 +7,8 @@ import pygame
 import copy
 
 class Ant:
-    def __init__(self, dna, food, vector):
+    # def __init__(self, dna, food, vector, create_timestamp, end_timestamp, parent=None):
+    def __init__(self, dna, food, vector, parent=None):
         self.dna = copy.deepcopy(dna)
         # self._decision_brain = dna['decision_brain']
         # self.movement_brain = dna['movement_brain']
@@ -18,6 +19,9 @@ class Ant:
         self.vector = vector
         self.food = food
         self.direction = 0
+        self.parent = parent
+        # self.create_timestamp = create_timestamp
+        # self.end_timestamp = end_timestamp
 
         self.dna['energy'] = 1000
         self.dna['vision_mask'] = self.dna['vision_mask']
@@ -32,6 +36,14 @@ class Ant:
         ant.dna['velocity'] = max(1, ant.dna['velocity'] + random.randrange(-1, 2))
 
         # ant.dna = {'energy': ant.energy, 'vision_mask': ant.vision_mask, 'vision_distance': ant.vision_distance, 'offspring_range': ant.offspring_range, 'velocity': ant.velocity}
+    def offspring_generation(self):
+        ants = []
+        num_ant = random.randint(0, self.dna['offspring_range'])
+        for _ in range(num_ant):
+            if self.dna['energy'] < offspring_energy_required:
+                break
+            ant = Ant(self.dna, None, self.vector, self)
+            self.dna['energy'] -= offspring_energy_required
 
     def energy_calc(self, vector):
         return max(1, (self.dna['energy']/1000)) + self.dna['velocity']*box_distance(self.vector, vector) + (self.dna['vision_mask'].count(1)*self.dna['vision_distance'])/10
@@ -48,16 +60,27 @@ class Ant:
 
         ind = self.direction
         for _ in range(8):
+            # print(x, y, ind)
             if (x, y) == self.direction_move[ind]:
                 return ind
             ind = (ind + 1)%8
         return 8
+
+    def set_direction(self, prev_location, cur_location):
+        x = cur_location.x - prev_location.x 
+        y = cur_location.y - prev_location.y
+        vs_msk = self.x_y_vision(x, y)
+        if vs_msk == 8:
+            self.direction = 0
+        else:
+            self.direction =  self.x_y_vision(x, y)
 
     def move(self):
 
         nearest_food = []
         nearest_food_to_move = None
         nearest_location_to_move = None
+        prev_location = self.vector
         # map_ind = [column, row, right_diagonal, left_diagonal]
         map_ind = [self.vector.x, self.vector.y, self.vector.x + self.vector.y, GRID_WIDTH-self.vector.x + self.vector.y]
         ind = 0
@@ -71,6 +94,7 @@ class Ant:
             ind += 1
 
 
+        found_food = False
         # move to the nearest food
         if len(nearest_food) > 0:
             nearest_food.sort(key = operator.itemgetter(0))
@@ -90,6 +114,7 @@ class Ant:
             if box_distance(nearest_food_to_move, self.vector) <= self.dna['velocity']:
                 nearest_location_to_move = nearest_food_to_move
                 self.vector = nearest_location_to_move
+                self.set_direction(prev_location, self.vector)
                 return nearest_location_to_move, nearest_food_to_move
 
             # move randomly to any 8 pos which is near to the nearest food
@@ -103,6 +128,7 @@ class Ant:
                         if euclid_dist < min_distance:
                             min_distance = euclid_dist
                             nearest_location_to_move = Vector(x, y)
+                
                         
 
         # if no food found in vision move randomly
@@ -118,6 +144,7 @@ class Ant:
         
         self.dna['energy'] -= self.energy_calc(nearest_location_to_move)
         self.vector = nearest_location_to_move
+        self.set_direction(prev_location, self.vector)
 
         
         return nearest_location_to_move, None
@@ -126,6 +153,8 @@ class Ant:
         ant_image = pygame.Surface((TILE_SIZE, TILE_SIZE))
         ant_image.fill((0, 0, 0))
         WIN.blit(ant_image, (self.vector.x*TILE_SIZE, self.vector.y*TILE_SIZE))
+        # Color_line=(100,100,100)
+        # pygame.draw.line(WIN,Color_line,(60,80),(130,100))
 
 
     # def __str__(self):

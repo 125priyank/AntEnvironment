@@ -12,6 +12,7 @@ class Environment:
         self.base_dna = dna
         self.food = Food(num_initial_food)
         self.ants = []
+        self.removed_ants = []
         self.add_ants([], num_initial_ants)
         self.day_length = day_length
         self.num_initial_food = num_initial_food
@@ -58,6 +59,7 @@ class Environment:
         for ant in self.ants:
             eng += ant.dna['energy']
         print(eng, self.ants[0].dna)
+        
         self.food = Food(self.num_initial_food)
         for _ in range(elitesize):
             ants.append(Ant(self.ants[0].dna, self.food, self.random_location()))
@@ -93,11 +95,11 @@ class Environment:
                     ant.draw(WIN)
                 pygame.display.update()
             
-            less_energy_ant = []
+            less_energy_ants = []
             for ant in self.ants:
                 ant_new_locaion, food_on_ant = ant.move()
                 if ant_new_locaion == None:
-                    less_energy_ant.append(ant)
+                    less_energy_ants.append(ant)
                 elif food_on_ant != None:
                     self.food.add_competition(food_on_ant, ant)
 
@@ -106,9 +108,17 @@ class Environment:
                 if ant in energy_dict:
                     ant.dna['energy'] += energy_dict[ant]
 
+            for ant in self.ants:
+                if ant.dna['energy'] <= 0:
+                    less_energy_ants.append(ant)
+
+            for less_energy_ant in less_energy_ants:
+                self.removed_ants.append(less_energy_ant)
+                self.ants.remove(less_energy_ant)
+
             # print(ant.energy)
-        # for ant in self.ants:
-        #     print(ant.energy, ant.velocity)
+        for ant in self.ants:
+            print(ant.dna['energy'], ant.dna['velocity'])
 
     def ga(self, gui, num_iter, elitesize):
         while num_iter > 0:
