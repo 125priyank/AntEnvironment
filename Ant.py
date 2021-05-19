@@ -7,8 +7,8 @@ import pygame
 import copy
 
 class Ant:
-    # def __init__(self, dna, food, vector, create_timestamp, end_timestamp, parent=None):
-    def __init__(self, dna, food, vector, parent=None):
+    def __init__(self, dna, food, vector, create_timestamp, parent=None):
+    # def __init__(self, dna, food, vector, parent=None):
         self.dna = copy.deepcopy(dna)
         # self._decision_brain = dna['decision_brain']
         # self.movement_brain = dna['movement_brain']
@@ -16,37 +16,38 @@ class Ant:
         # direction = [up, up-right, right, right-down, down, down-left, left, left-up]
         self.direction_move = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
 
-        self.vector = vector
+        self.vector = copy.deepcopy(vector)
+        self.all_vector_positions = [self.vector]
         self.food = food
         self.direction = 0
         self.parent = parent
-        # self.create_timestamp = create_timestamp
-        # self.end_timestamp = end_timestamp
+        self.create_timestamp = create_timestamp
+        self.end_timestamp = create_timestamp
 
         self.dna['energy'] = 1000
-        self.dna['vision_mask'] = self.dna['vision_mask']
-        self.dna['vision_distance'] = self.dna['vision_distance']
-        self.dna['offspring_range'] = self.dna['offspring_range']
-        self.dna['velocity'] = self.dna['velocity']
 
     def mutate(self, ant):
         ant.dna['vision_mask'][random.randrange(0, 8)] ^= 1
         ant.dna['vision_distance'] = max(1, ant.dna['vision_distance'] + random.randint(-1, 1))
-        ant.dna['offspring_range'] = ant.dna['offspring_range'] + random.randint(-1, 1)
+        ant.dna['offspring_range'] = max(1, ant.dna['offspring_range'] + 1)
         ant.dna['velocity'] = max(1, ant.dna['velocity'] + random.randrange(-1, 2))
 
         # ant.dna = {'energy': ant.energy, 'vision_mask': ant.vision_mask, 'vision_distance': ant.vision_distance, 'offspring_range': ant.offspring_range, 'velocity': ant.velocity}
-    def offspring_generation(self):
+    def offspring_generation(self, food):
         ants = []
-        num_ant = random.randint(0, self.dna['offspring_range'])
+        num_ant = random.randint(1, self.dna['offspring_range'])
         for _ in range(num_ant):
             if self.dna['energy'] < offspring_energy_required:
                 break
-            ant = Ant(self.dna, None, self.vector, self)
+            ant = Ant(dna = self.dna, food = food, vector = self.vector, create_timestamp=0, parent=self)
             self.dna['energy'] -= offspring_energy_required
+            if random.random() < 0.5:
+                self.mutate(ant)
+            ants.append(ant)
+        return ants
 
     def energy_calc(self, vector):
-        return max(1, (self.dna['energy']/1000)) + self.dna['velocity']*box_distance(self.vector, vector) + (self.dna['vision_mask'].count(1)*self.dna['vision_distance'])/10
+        return max(1, (self.dna['energy']/1000)) + self.dna['velocity']*self.dna['velocity']*box_distance(self.vector, vector) + (self.dna['vision_mask'].count(1)*self.dna['vision_distance'])/10
 
     def x_y_vision(self, x, y):
         if x < 0:
@@ -76,7 +77,6 @@ class Ant:
             self.direction =  self.x_y_vision(x, y)
 
     def move(self):
-
         nearest_food = []
         nearest_food_to_move = None
         nearest_location_to_move = None
@@ -115,6 +115,8 @@ class Ant:
                 nearest_location_to_move = nearest_food_to_move
                 self.vector = nearest_location_to_move
                 self.set_direction(prev_location, self.vector)
+                self.dna['energy'] -= self.energy_calc(nearest_location_to_move)
+                self.all_vector_positions.append(self.vector)
                 return nearest_location_to_move, nearest_food_to_move
 
             # move randomly to any 8 pos which is near to the nearest food
@@ -141,10 +143,10 @@ class Ant:
                 if in_grid(x, y):
                     nearest_location_to_move = Vector(x, y)
                     break
-        
         self.dna['energy'] -= self.energy_calc(nearest_location_to_move)
         self.vector = nearest_location_to_move
         self.set_direction(prev_location, self.vector)
+        self.all_vector_positions.append(self.vector)
 
         
         return nearest_location_to_move, None

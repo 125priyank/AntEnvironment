@@ -41,7 +41,10 @@ class Food:
         for ants in self.food_competition.values():
             l = len(ants)
             for ant in ants:
-                energy_dict[ant] = self.energy_in_food/l
+                if ant not in energy_dict:
+                    energy_dict[ant] = self.energy_in_food/l
+                else:
+                    energy_dict[ant] += self.energy_in_food/l
 
         for food in self.food_competition.keys():
             self.food.remove(food)
