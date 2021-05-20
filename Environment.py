@@ -64,7 +64,7 @@ class Environment:
         # for ant in remove_ant:
         #     print(ant.create_timestamp, ant.end_timestamp )
         
-    def next_generation(self, elitesize):
+    def next_generation(self):
         if len(self.ants) == 0:
             return None
 
@@ -100,7 +100,11 @@ class Environment:
         prev_clock = self.clock
         # while QUIT == False and len(self.ants) > 0 and (self.clock - prev_clock < 20 or len(self.food.food) > 0):
         while QUIT == False and len(self.ants) > 0 and (self.clock - prev_clock < 20 or len(self.food.food) > 0) and self.clock - prev_clock < 100:
-            self.clock += 1
+            
+            foods = []
+            for food in self.food.food:
+                foods.append(food)
+            self.removed_foods.append(foods)
             if gui:
                 clock.tick(FPS)
                 for event in pygame.event.get():
@@ -133,10 +137,12 @@ class Environment:
 
             self.remove_ants(less_energy_ants)
 
+            self.clock += 1
+
         # for ant in self.ants:
         #     print(ant.dna['energy'], ant.dna['velocity'])
 
-    def ga(self, gui, num_iter, elitesize):
+    def ga(self, gui, num_iter):
         gui=False
         while num_iter > 0 and len(self.ants) > 0:
             print('Generation Number = {}  Number of ants = {}'.format(self.generation_num, len(self.ants)))
@@ -146,7 +152,7 @@ class Environment:
             # for ant in self.removed_ants:
             #     print(len(ant.all_vector_positions), ant.dna['velocity'])
             if num_iter > 1:
-                self.next_generation(elitesize)
+                self.next_generation()
             self.generation_num += 1
             num_iter -= 1
 
@@ -156,11 +162,17 @@ class Environment:
             ant.end_timestamp = self.clock
             self.removed_ants.append(ant)
 
+        save = {}
+        save['ants'] = self.removed_ants
+        save['foods'] = self.removed_foods
+        return save
         # print(len(set(self.ants)))
         # for ant in self.removed_ants:
         #     print(ant.create_timestamp, ant.end_timestamp)
         # for ant in self.removed_ants:
-        #     print(ant.all_vector_positions, len(ant.all_vector_positions), ant.dna['energy'])
+        #     print(ant.all_vector_positions)
+        # for food in self.removed_foods:
+        #     print(food)
         
 
         

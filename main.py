@@ -1,10 +1,8 @@
-import pygame
-import numpy as np
-import random
 from settings import *
 from Ant import *
 from Food import *
 from Environment import *
+import pickle
 
 gui = True
 # gui = False
@@ -13,7 +11,9 @@ dna = {'energy': 1000, 'vision_mask': [1 for i in range(8)], 'vision_distance': 
 
 def main():
     env = Environment(dna = dna, num_initial_ants= 4, num_initial_food=40,day_length=100)
-    env.ga(gui = gui, num_iter=1000, elitesize=1)
+    save = env.ga(gui = gui, num_iter=2)
+    with open('save.pickle', 'wb') as handle:
+        pickle.dump(save, handle, protocol=4)
 
 def main2():
     for i in range(0, 11):
